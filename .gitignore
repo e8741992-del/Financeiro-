@@ -1,0 +1,6 @@
+/android/commandlinetools-linux*
+/android/.gradle
+/node_modules
+.gradle
+.idea
+build
