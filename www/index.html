@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0f1117"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Finanças"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>Minhas Finanças</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#181c27; --card:#1e2333; --border:#2a3045;
+    --accent:#4ade80; --danger:#f87171; --warn:#fbbf24; --blue:#60a5fa;
+    --purple:#a78bfa; --muted:#6b7280; --text:#f1f5f9; --textDim:#94a3b8;
+    --nav-h: 58px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+  input, select, button { font-family: inherit; color-scheme: dark; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* Top nav */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px;
+    height: var(--nav-h);
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 4px; gap: 3px; background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+    transition: color 0.15s; text-transform: uppercase; border-radius: 10px;
+  }
+  .nav-btn .icon { font-size: 19px; line-height: 1; }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active .icon { filter: drop-shadow(0 0 6px rgba(74,222,128,.5)); }
+
+  /* Content */
+  #app { padding-top: calc(var(--nav-h) + 10px); }
+  .page { display: none; flex-direction: column; gap: 16px; padding: 14px 14px 32px; max-width: 680px; margin: 0 auto; width: 100%; }
+  .page.active { display: flex; }
+
+  /* Page title */
+  .page-title { font-size: 22px; font-weight: 900; padding: 4px 2px 0; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .card-title { font-size: 11px; color: var(--textDim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+
+  /* Inputs */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--textDim); font-weight: 600; }
+  .field-wrap { position: relative; }
+  .field-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+  .field input, .field select {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); padding: 11px 14px; font-size: 15px; width: 100%; outline: none;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field.has-prefix input { padding-left: 30px; }
+
+  /* Buttons */
+  .btn { border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-weight: 700; transition: opacity 0.15s; padding: 12px 18px; font-size: 14px; }
+  .btn:active { opacity: 0.7; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-danger  { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); padding: 7px 11px; font-size: 12px; }
+  .btn-ghost   { background: transparent; color: var(--textDim); border: 1px solid var(--border); padding: 8px 14px; font-size: 13px; }
+  .btn-full    { width: 100%; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .paid-btn {
+    display: flex; align-items: center; gap: 5px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 12px; font-weight: 700;
+    padding: 6px 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: inherit;
+  }
+  .paid-btn.is-paid { background: rgba(74,222,128,.15); border-color: var(--accent); color: var(--accent); }
+  .paid-btn:active { opacity: 0.7; }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .toggle-track { width: 42px; height: 24px; border-radius: 99px; background: var(--border); position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb { position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 0.2s; }
+  .toggle-track.on .toggle-thumb { left: 22px; }
+  .toggle-label { font-size: 13px; color: var(--textDim); }
+
+  .tag { display: inline-flex; align-items: center; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
+  .bar-track { background: var(--border); border-radius: 99px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+
+  .item { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--surface); border-radius: 12px; border: 1.5px solid var(--border); transition: all 0.2s; }
+  .item.paid { opacity: 0.6; border-color: rgba(74,222,128,.4); }
+  .item-left  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .item-bottom { display: flex; align-items: center; gap: 8px; justify-content: space-between; width: 100%; }
+  .item-name  { font-size: 14px; font-weight: 500; }
+  .item-name.struck { text-decoration: line-through; color: var(--textDim); }
+  .item-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+  .item-val { font-weight: 700; font-size: 15px; margin-left: auto; }
+
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 90px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow: hidden; }
+  .stat-label { font-size: 10px; color: var(--textDim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
+  .stat-val   { font-size: 15px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+
+  .month-nav { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; flex-wrap: wrap; }
+  .month-arrow { background: none; border: none; color: var(--textDim); cursor: pointer; font-size: 22px; line-height: 1; padding: 0 6px; }
+  .month-label { font-weight: 800; font-size: 16px; min-width: 148px; text-align: center; color: var(--text); }
+  .month-chips { display: flex; gap: 4px; flex-wrap: wrap; padding-left: 10px; border-left: 1px solid var(--border); margin-left: 4px; }
+  .month-chip { border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--textDim); font-family: inherit; }
+  .month-chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .info-box { padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+  .form-grid { display: flex; flex-direction: column; gap: 12px; }
+.parc-box { 
+    padding: 14px; 
+    background: var(--surface); 
+    border-radius: 12px; 
+    border: 1px solid rgba(167,139,250,.3); 
+    display: flex !important; 
+    flex-direction: row !important; 
+    align-items: center !important; 
+    justify-content: space-between !important; 
+    gap: 8px !important; 
+    flex-wrap: nowrap !important; /* nowrap ajuda a manter tudo na mesma linha */
+}
+
+
+.parc-title { 
+    font-size: 13px; 
+    color: var(--purple); 
+    font-weight: 700; 
+    flex: 1; 
+    min-width: 0; 
+    flex-shrink: 1; /* Isso força o título a diminuir se não houver espaço */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+
+
+
+
+  
+#toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--accent); color: #000; padding: 10px 22px; border-radius: 99px; font-weight: 700; font-size: 13px; z-index: 999; transition: transform 0.3s; pointer-events: none; box-shadow: 0 4px 20px rgba(74,222,128,.35); }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 380px) {
+    .stat-val { font-size: 13px; }
+    .nav-btn { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast">💾 Salvo!</div>
+
+<!-- TOP NAV -->
+<nav class="topbar">
+  <button class="nav-btn active" id="nav-fixas" onclick="goPage('fixas')"><span class="icon">📌</span>Fixas</button>
+  <button class="nav-btn" id="nav-orcamento" onclick="goPage('orcamento')"><span class="icon">💰</span>Orçamento</button>
+  <button class="nav-btn" id="nav-dividas" onclick="goPage('dividas')"><span class="icon">💳</span>Dívidas</button>
+  <button class="nav-btn" id="nav-metas" onclick="goPage('metas')"><span class="icon">🎯</span>Metas</button>
+</nav>
+
+<div id="app">
+
+  <!-- CONTAS FIXAS -->
+  <div id="page-fixas" class="page active">
+    <div class="page-title">📌 Contas Fixas</div>
+
+    <div class="info-box" style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);color:var(--purple)">
+      Cadastre tudo que paga todo mês — aluguel, streaming, planos, parcelamentos. Elas aparecem automaticamente no orçamento.
+    </div>
+
+    <div class="card">
+      <div class="card-title">Adicionar Conta Fixa</div>
+      <div class="form-grid">
+        <div class="field"><label>Descrição</label><div class="field-wrap"><input id="fx-nome" type="text" placeholder="Ex: Plano de celular, Netflix..."/></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Valor (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="fx-valor" type="number" inputmode="decimal" placeholder="0,00" style="padding-left:30px"/></div></div>
+          <div class="field" style="flex:1;min-width:140px"><label>Categoria</label><div class="field-wrap"><select id="fx-cat">
+            <option>Moradia</option><option>Assinaturas</option><option>Telecomunicações</option>
+            <option>Transporte</option><option>Saúde</option><option>Educação</option>
+            <option>Parcelamento</option><option>Outros</option>
+          </select></div></div>
+        </div>
+        <div class="toggle-wrap" id="fx-parc-toggle">
+          <div class="toggle-track" id="fx-parc-track"><div class="toggle-thumb"></div></div>
+          <span class="toggle-label">É um parcelamento?</span>
+        </div>
+        <div id="fx-parc-box" class="parc-box" style="display:none">
+          <div class="parc-title">📦 Parcelamento</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:130px"><label>Parcela atual (Maio)</label><div class="field-wrap"><input id="fx-parc-atual" type="number" inputmode="numeric" placeholder="Ex: 10"/></div></div>
+            <div class="field" style="flex:1;min-width:130px"><label>Total de parcelas</label><div class="field-wrap"><input id="fx-parc-total" type="number" inputmode="numeric" placeholder="Ex: 12"/></div></div>
+          </div>
+          <div id="fx-parc-preview" style="font-size:13px;color:var(--textDim);display:none;padding:8px 10px;background:var(--card);border-radius:8px"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="addFixa()">+ Adicionar Conta Fixa</button>
+      </div>
+    </div>
+
+    <div id="fixas-resumo" style="display:none">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">Fixas mensais</div><div class="stat-val" id="fx-total-mensal" style="color:var(--purple)">R$ 0</div></div>
+        <div class="stat-box"><div class="stat-label">Parcelamentos</div><div class="stat-val" id="fx-total-parc" style="color:var(--warn)">R$ 0</div></div>
+        <div class="stat-box"><div class="stat-label">Total/mês</div><div class="stat-val" id="fx-total" style="color:var(--accent)">R$ 0</div></div>
+      </div>
+    </div>
+
+    <div id="fixas-list" class="card" style="display:none">
+      <div class="card-title">Suas Contas Fixas</div>
+      <div id="fixas-items" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- ORÇAMENTO -->
+  <div id="page-orcamento" class="page">
+    <div class="page-title">💰 Orçamento</div>
+
+    <div id="month-nav" class="month-nav">
+      <button class="month-arrow" onclick="prevMonth()">‹</button>
+      <span class="month-label" id="month-label"></span>
+      <button class="month-arrow" onclick="nextMonth()">›</button>
+      <div id="month-chips" class="month-chips"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Renda do Mês</div>
+      <div class="field has-prefix">
+        <div class="field-wrap"><span class="field-prefix">R$</span><input id="renda-input" type="number" inputmode="decimal" placeholder="0,00" style="padding-left:30px;font-size:18px;font-weight:700" oninput="saveRenda()"/></div>
+      </div>
+    </div>
+
+    <div id="pay-status" style="display:none">
+      <div class="stats-row">
+        <div class="stat-box" style="border-color:rgba(74,222,128,.3)"><div class="stat-label">✅ Já paguei</div><div class="stat-val" id="stat-pago" style="color:var(--accent)">R$ 0</div><div class="bar-track" style="height:6px;margin-top:8px"><div class="bar-fill" id="bar-pago" style="background:var(--accent);height:6px"></div></div></div>
+        <div class="stat-box" style="border-color:rgba(251,191,36,.3)"><div class="stat-label">⏳ Ainda falta</div><div class="stat-val" id="stat-pend" style="color:var(--warn)">R$ 0</div><div class="bar-track" style="height:6px;margin-top:8px"><div class="bar-fill" id="bar-pend" style="background:var(--warn);height:6px"></div></div></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-label">Fixo</div><div class="stat-val" id="sts-fixo" style="color:var(--purple)">R$ 0</div></div>
+      <div class="stat-box"><div class="stat-label">Variável</div><div class="stat-val" id="sts-var" style="color:var(--warn)">R$ 0</div></div>
+      <div class="stat-box"><div class="stat-label">Saldo</div><div class="stat-val" id="sts-saldo">R$ 0</div></div>
+    </div>
+
+    <div id="fixas-mes-card" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin:0">Contas Fixas do Mês</div>
+        <span class="tag" id="fixas-mes-total" style="background:rgba(167,139,250,.2);color:var(--purple)"></span>
+      </div>
+      <div id="fixas-mes-items" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <div id="regra-card" class="card" style="display:none">
+      <div class="card-title">Regra 50/30/20</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;color:var(--textDim)">Necessidades (50%)</span><span id="r50" style="font-size:13px"></span></div><div class="bar-track" style="height:7px"><div class="bar-fill" id="b50" style="height:7px"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;color:var(--textDim)">Lazer (30%)</span><span id="r30" style="font-size:13px"></span></div><div class="bar-track" style="height:7px"><div class="bar-fill" id="b30" style="height:7px"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;color:var(--textDim)">Poupança (20%)</span><span id="r20" style="font-size:13px"></span></div><div class="bar-track" style="height:7px"><div class="bar-fill" id="b20" style="height:7px"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Adicionar Gasto Variável</div>
+      <div class="form-grid">
+        <div class="field"><label>Descrição</label><div class="field-wrap"><input id="gasto-nome" type="text" placeholder="Ex: Mercado, cinema..."/></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Valor (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="gasto-valor" type="number" inputmode="decimal" placeholder="0,00" style="padding-left:30px"/></div></div>
+          <div class="field" style="flex:1;min-width:140px"><label>Categoria</label><div class="field-wrap"><select id="gasto-cat">
+            <option>Moradia</option><option>Alimentação</option><option>Transporte</option>
+            <option>Saúde</option><option>Lazer</option><option>Educação</option><option>Outros</option>
+          </select></div></div>
+        </div>
+        <div class="toggle-wrap" id="gasto-env-toggle" style="padding:4px 0">
+          <div class="toggle-track" id="gasto-env-track"><div class="toggle-thumb"></div></div>
+          <span class="toggle-label">Tem limite pra gastar? (Feira, Gasolina...)</span>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="addGasto()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div id="gastos-card" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin:0">Gastos Variáveis</div>
+        <button class="btn btn-ghost" onclick="copiarMesAnterior()" style="font-size:12px;padding:6px 10px">↩ Mês anterior</button>
+      </div>
+      <div id="gastos-items" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- DÍVIDAS -->
+  <div id="page-dividas" class="page">
+    <div class="page-title">💳 Dívidas</div>
+
+    <div class="info-box" style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);color:var(--blue)">
+      💡 As dívidas são contínuas — acompanhe o progresso aqui, independente do mês.
+    </div>
+
+    <div id="dividas-resumo" style="display:none">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">Total</div><div class="stat-val" id="div-total" style="color:var(--danger)">R$ 0</div></div>
+        <div class="stat-box"><div class="stat-label">Já Pago</div><div class="stat-val" id="div-pago" style="color:var(--accent)">R$ 0</div></div>
+        <div class="stat-box"><div class="stat-label">Restante</div><div class="stat-val" id="div-rest" style="color:var(--warn)">R$ 0</div></div>
+      </div>
+      <div class="bar-track" style="height:10px;margin-top:2px"><div class="bar-fill" id="bar-divida" style="background:var(--accent);height:10px"></div></div>
+      <div id="div-pct" style="font-size:12px;color:var(--textDim);margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Adicionar Dívida</div>
+      <div class="form-grid">
+        <div class="field"><label>Nome</label><div class="field-wrap"><input id="dv-nome" type="text" placeholder="Ex: Cartão Nubank"/></div></div>
+        <div class="field"><label>Tipo</label><div class="field-wrap"><select id="dv-tipo">
+          <option>Cartão de Crédito</option><option>Empréstimo</option><option>Financiamento</option><option>Cheque Especial</option><option>Outro</option>
+        </select></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Total (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="dv-total" type="number" inputmode="decimal" style="padding-left:30px"/></div></div>
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Já pago (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="dv-pago-input" type="number" inputmode="decimal" style="padding-left:30px"/></div></div>
+          <div class="field has-prefix" style="flex:1;min-width:110px"><label>Juros % a.m.</label><div class="field-wrap"><span class="field-prefix">%</span><input id="dv-juros" type="number" inputmode="decimal" style="padding-left:30px"/></div></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="addDivida()">+ Adicionar Dívida</button>
+      </div>
+    </div>
+
+    <div id="dividas-list" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin:0">Suas Dívidas</div>
+        <span class="tag" style="background:rgba(251,191,36,.15);color:var(--warn)">Maior juros primeiro</span>
+      </div>
+      <div id="dividas-items" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- METAS -->
+  <div id="page-metas" class="page">
+    <div class="page-title">🎯 Metas</div>
+
+    <div class="info-box" style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);color:var(--blue)">
+      💡 Veja quanto guardar por mês para atingir cada objetivo.
+    </div>
+
+    <div class="card">
+      <div class="card-title">Nova Meta</div>
+      <div class="form-grid">
+        <div class="field"><label>Nome da meta</label><div class="field-wrap"><input id="mt-nome" type="text" placeholder="Ex: Viagem, reserva, carro..."/></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Objetivo (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="mt-alvo" type="number" inputmode="decimal" style="padding-left:30px"/></div></div>
+          <div class="field has-prefix" style="flex:1;min-width:120px"><label>Já guardado (R$)</label><div class="field-wrap"><span class="field-prefix">R$</span><input id="mt-atual" type="number" inputmode="decimal" style="padding-left:30px"/></div></div>
+        </div>
+        <div class="field"><label>Prazo</label><div class="field-wrap"><input id="mt-prazo" type="month"/></div></div>
+        <button class="btn btn-primary btn-full" onclick="addMeta()">+ Criar Meta</button>
+      </div>
+    </div>
+
+    <div id="metas-list" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div id="metas-empty" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Nenhuma meta criada ainda. 🎯</div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+const BASE_YEAR=2025,BASE_MONTH=4;
+let state={fixas:[],months:{"2025-05":{renda:"",gastos:[],pagamentos:{}}},dividas:[],metas:[],curYear:2025,curMonth:4};
+
+function save(){try{localStorage.setItem("mf_state",JSON.stringify(state));}catch(e){}showToast();}
+function load(){try{const s=localStorage.getItem("mf_state");if(s)state=JSON.parse(s);}catch(e){}}
+let toastTimer;
+function showToast(){clearTimeout(toastTimer);const t=document.getElementById("toast");t.classList.add("show");toastTimer=setTimeout(()=>t.classList.remove("show"),1800);}
+
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const fmt=v=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+const fmtS=v=>{const n=Number(v)||0,a=Math.abs(n),s=n<0?"-":"";if(a>=1000000)return s+"R$ "+(a/1000000).toFixed(1).replace(".",",")+"M";if(a>=1000)return s+"R$ "+(a/1000).toFixed(1).replace(".",",")+"K";return fmt(n);};
+const pct=(p,t)=>t>0?Math.min(100,(p/t)*100):0;
+const mkKey=(y,m)=>`${y}-${String(m+1).padStart(2,"0")}`;
+const getOffset=(y,m)=>(y-BASE_YEAR)*12+(m-BASE_MONTH);
+function isFixaAtiva(f,offset){if(!f.parcelado)return true;return(Number(f.parcAtual)+offset)<=Number(f.parcTotal);}
+function parcInfo(f,offset){if(!f.parcelado)return null;const n=Number(f.parcAtual)+offset,t=Number(f.parcTotal);return{n,t,restam:t-n};}
+function setBar(id,val,max,color){const el=document.getElementById(id);if(el){el.style.width=pct(val,max)+"%";el.style.background=color||(val>max?"var(--danger)":"var(--accent)");}}
+
+function goPage(page){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+page).classList.add("active");
+  document.getElementById("nav-"+page).classList.add("active");
+  window.scrollTo(0,0);
+  if(page==="orcamento")renderOrcamento();
+  if(page==="fixas")renderFixas();
+  if(page==="dividas")renderDividas();
+  if(page==="metas")renderMetas();
+}
+
+function curKey(){return mkKey(state.curYear,state.curMonth);}
+function ensureMonth(y,m){const k=mkKey(y,m);if(!state.months[k])state.months[k]={renda:"",gastos:[],pagamentos:{}};}
+function prevMonth(){if(state.curMonth===0){state.curYear--;state.curMonth=11;}else state.curMonth--;ensureMonth(state.curYear,state.curMonth);renderOrcamento();}
+function nextMonth(){if(state.curMonth===11){state.curYear++;state.curMonth=0;}else state.curMonth++;ensureMonth(state.curYear,state.curMonth);renderOrcamento();}
+
+// FIXAS
+let fxParcelado=false;
+document.getElementById("fx-parc-toggle")?.addEventListener("click",()=>{
+  fxParcelado=!fxParcelado;
+  const t=document.getElementById("fx-parc-track");if(t)t.className="toggle-track"+(fxParcelado?" on":"");
+  const b=document.getElementById("fx-parc-box");if(b){b.style.display=fxParcelado?"flex":"none";if(fxParcelado)b.style.flexDirection="column";}
+});
+["fx-parc-atual","fx-parc-total"].forEach(id=>document.getElementById(id)?.addEventListener("input",updateParcPreview));
+function updateParcPreview(){
+  const a=Number(document.getElementById("fx-parc-atual").value),t=Number(document.getElementById("fx-parc-total").value);
+  const el=document.getElementById("fx-parc-preview");
+  if(a&&t){el.style.display="block";el.textContent=`Faltam ${t-a} parcelas após este mês${a>=t?" — última este mês! ✅":""}`;}
+  else el.style.display="none";
+}
+function addFixa(){
+  const nome=document.getElementById("fx-nome").value.trim(),valor=document.getElementById("fx-valor").value,cat=document.getElementById("fx-cat").value;
+  if(!nome||!valor)return;
+  const f={id:Date.now(),nome,valor,categoria:cat,parcelado:fxParcelado};
+  if(fxParcelado){const pa=document.getElementById("fx-parc-atual").value,pt=document.getElementById("fx-parc-total").value;if(!pa||!pt)return;f.parcAtual=pa;f.parcTotal=pt;}
+  state.fixas.push(f);
+  ["fx-nome","fx-valor","fx-parc-atual","fx-parc-total"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fx-parc-preview").style.display="none";
+  fxParcelado=false;const fxT=document.getElementById("fx-parc-track");if(fxT)fxT.className="toggle-track";const fxB=document.getElementById("fx-parc-box");if(fxB)fxB.style.display="none";
+  save();renderFixas();
+}
+function removeFixa(id){state.fixas=state.fixas.filter(f=>f.id!==id);save();renderFixas();}
+function renderFixas(){
+  const fixas=state.fixas,offset=getOffset(state.curYear,state.curMonth);
+  const totalM=fixas.filter(f=>!f.parcelado).reduce((s,f)=>s+Number(f.valor),0);
+  const totalP=fixas.filter(f=>f.parcelado&&isFixaAtiva(f,offset)).reduce((s,f)=>s+Number(f.valor),0);
+  const resumo=document.getElementById("fixas-resumo"),listCard=document.getElementById("fixas-list");
+  if(fixas.length>0){
+    resumo.style.display="block";listCard.style.display="block";
+    document.getElementById("fx-total-mensal").textContent=fmtS(totalM);
+    document.getElementById("fx-total-parc").textContent=fmtS(totalP);
+    document.getElementById("fx-total").textContent=fmtS(totalM+totalP);
+  }else{resumo.style.display="none";listCard.style.display="none";}
+  const container=document.getElementById("fixas-items");container.innerHTML="";
+  fixas.forEach(f=>{
+    const info=parcInfo(f,offset),quase=info&&info.restam<=2;
+    const div=document.createElement("div");
+    div.style.cssText="background:var(--surface);border-radius:12px;padding:14px 16px;border:1.5px solid "+(quase?"rgba(251,191,36,.4)":"var(--border)");
+    let tags=f.parcelado?`<span class="tag" style="background:rgba(251,191,36,.15);color:var(--warn)">${f.categoria}</span>`:`<span class="tag" style="background:rgba(167,139,250,.15);color:var(--purple)">${f.categoria}</span>`;
+    if(quase)tags+=` <span class="tag" style="background:rgba(251,191,36,.15);color:var(--warn)">⚠ Quase acabando</span>`;
+    if(info&&info.n>=info.t)tags+=` <span class="tag" style="background:rgba(74,222,128,.15);color:var(--accent)">✅ Última em Maio</span>`;
+    div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1"><span style="font-size:16px">${f.parcelado?"📦":"📌"}</span><span style="font-weight:700;font-size:14px">${f.nome}</span>${tags}</div>
+      <div style="display:flex;gap:8px;align-items:center"><span style="font-weight:700;color:${f.parcelado?"var(--warn)":"var(--purple)"}">${fmt(f.valor)}</span><button class="btn btn-danger" onclick="removeFixa(${f.id})">✕</button></div>
+    </div>
+    ${info?`<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;color:var(--textDim)">Parcela ${info.n} de ${info.t}</span><span style="font-size:12px;font-weight:700;color:${info.restam===0?"var(--accent)":"var(--warn)"}">${info.restam===0?"Última este mês! 🎉":"Faltam "+info.restam}</span></div><div class="bar-track" style="height:6px"><div class="bar-fill" style="width:${pct(info.n,info.t)}%;background:${info.restam<=2?"var(--warn)":"var(--purple)"};height:6px"></div></div></div>`:""}`;
+    container.appendChild(div);
+  });
+}
+
+// ORÇAMENTO
+// Envelope toggle
+let gastoEnvelope=false;
+document.getElementById("gasto-env-toggle")?.addEventListener("click",()=>{
+  gastoEnvelope=!gastoEnvelope;
+  const track=document.getElementById("gasto-env-track");
+  if(track) track.className="toggle-track"+(gastoEnvelope?" on":"");
+});
+
+function saveRenda(){const k=curKey();if(!state.months[k])state.months[k]={renda:"",gastos:[],pagamentos:{}};state.months[k].renda=document.getElementById("renda-input").value;save();updateOrcStats();}
+function addGasto(){
+  const nome=document.getElementById("gasto-nome").value.trim(),valor=document.getElementById("gasto-valor").value,cat=document.getElementById("gasto-cat").value;
+  if(!nome||!valor)return;
+  const k=curKey();if(!state.months[k])state.months[k]={renda:"",gastos:[],pagamentos:{}};
+  state.months[k].gastos.push({id:Date.now(),nome,valor,categoria:cat,envelope:gastoEnvelope,gastos_env:[]});
+  document.getElementById("gasto-nome").value="";document.getElementById("gasto-valor").value="";
+  gastoEnvelope=false;const envT=document.getElementById("gasto-env-track");if(envT)envT.className="toggle-track";
+  save();renderGastos();
+}
+function addEnvelopeGasto(gastoId,desc,val){
+  const k=curKey(),g=state.months[k].gastos.find(x=>x.id===gastoId);
+  if(!g||!desc||!val)return;
+  if(!g.gastos_env)g.gastos_env=[];
+  g.gastos_env.push({id:Date.now(),desc,val:Number(val)});
+  save();renderGastos();
+}
+function removeEnvelopeGasto(gastoId,subId){
+  const k=curKey(),g=state.months[k].gastos.find(x=>x.id===gastoId);
+  if(!g)return;
+  g.gastos_env=g.gastos_env.filter(x=>x.id!==subId);
+  save();renderGastos();
+}
+function removeGasto(id){const k=curKey();state.months[k].gastos=state.months[k].gastos.filter(g=>g.id!==id);delete state.months[k].pagamentos["var-"+id];save();renderGastos();}
+function togglePago(tipo,id){const k=curKey(),key=tipo+"-"+id;if(!state.months[k].pagamentos)state.months[k].pagamentos={};state.months[k].pagamentos[key]=!state.months[k].pagamentos[key];save();renderGastos();renderFixasMes();}
+function isPago(tipo,id){const k=curKey();return !!(state.months[k]&&state.months[k].pagamentos&&state.months[k].pagamentos[tipo+"-"+id]);}
+function copiarMesAnterior(){
+  const prevM=state.curMonth===0?11:state.curMonth-1,prevY=state.curMonth===0?state.curYear-1:state.curYear;
+  const prev=state.months[mkKey(prevY,prevM)];
+  if(!prev||!prev.gastos||prev.gastos.length===0){alert("Mês anterior sem gastos variáveis.");return;}
+  const k=curKey();state.months[k].gastos=[...prev.gastos.map(g=>({...g,id:Date.now()+Math.random()}))];
+  save();renderGastos();
+}
+function updateOrcStats(){
+  const k=curKey(),m=state.months[k]||{renda:"",gastos:[],pagamentos:{}};
+  const offset=getOffset(state.curYear,state.curMonth);
+  const fixasAtivas=state.fixas.filter(f=>isFixaAtiva(f,offset));
+  const totalFixas=fixasAtivas.reduce((s,f)=>s+Number(f.valor),0);
+  const totalVar=(m.gastos||[]).reduce((s,g)=>s+Number(g.valor),0);
+  const total=totalFixas+totalVar,renda=Number(m.renda)||0,saldo=renda-total;
+  document.getElementById("sts-fixo").textContent=fmtS(totalFixas);
+  document.getElementById("sts-var").textContent=fmtS(totalVar);
+  const sEl=document.getElementById("sts-saldo");sEl.textContent=fmt(saldo);sEl.style.color=saldo>=0?"var(--accent)":"var(--danger)";
+  if(renda>0){
+    document.getElementById("regra-card").style.display="block";
+    const lazer=(m.gastos||[]).filter(g=>g.categoria==="Lazer").reduce((s,g)=>s+Number(g.valor),0);
+    const nec=total-lazer,poupar=saldo>0?saldo:0;
+    document.getElementById("r50").textContent=fmt(nec)+" / "+fmt(renda*.5);
+    document.getElementById("r30").textContent=fmt(lazer)+" / "+fmt(renda*.3);
+    document.getElementById("r20").textContent=fmt(poupar)+" / "+fmt(renda*.2);
+    setBar("b50",nec,renda*.5);setBar("b30",lazer,renda*.3);setBar("b20",poupar,renda*.2);
+  }else document.getElementById("regra-card").style.display="none";
+  const pago=fixasAtivas.filter(f=>isPago("fixa",f.id)).reduce((s,f)=>s+Number(f.valor),0)+(m.gastos||[]).filter(g=>isPago("var",g.id)).reduce((s,g)=>s+Number(g.valor),0);
+  const pend=total-pago;
+  if(total>0){
+    document.getElementById("pay-status").style.display="block";
+    document.getElementById("stat-pago").textContent=fmtS(pago);document.getElementById("stat-pend").textContent=fmtS(pend);
+    setBar("bar-pago",pago,total,"var(--accent)");setBar("bar-pend",pend,total,"var(--warn)");
+  }else document.getElementById("pay-status").style.display="none";
+}
+function renderFixasMes(){
+  const offset=getOffset(state.curYear,state.curMonth);
+  const fixasAtivas=state.fixas.filter(f=>isFixaAtiva(f,offset));
+  const totalFixas=fixasAtivas.reduce((s,f)=>s+Number(f.valor),0);
+  const card=document.getElementById("fixas-mes-card");
+  if(fixasAtivas.length===0){card.style.display="none";updateOrcStats();return;}
+  card.style.display="block";document.getElementById("fixas-mes-total").textContent=fmt(totalFixas);
+  const container=document.getElementById("fixas-mes-items");container.innerHTML="";
+  fixasAtivas.forEach(f=>{
+    const info=parcInfo(f,offset),pago=isPago("fixa",f.id);
+    const div=document.createElement("div");div.className="item"+(pago?" paid":"");
+    div.innerHTML=`
+      <div class="item-left">
+        <span style="font-size:14px">${f.parcelado?"📦":"📌"}</span>
+        <span class="item-name${pago?" struck":""}" style="word-break:break-word">${f.nome}</span>
+        ${info?`<span style="font-size:12px;color:${info.restam===0?"var(--accent)":"var(--textDim)"}">${info.n}/${info.t}${info.restam===0?" 🎉":""}</span>`:""}
+      </div>
+      <div class="item-bottom">
+        <span style="font-weight:800;color:${f.parcelado?"var(--warn)":"var(--purple)"};font-size:16px">${fmtS(f.valor)}</span>
+        <button class="paid-btn${pago?" is-paid":""}" onclick="togglePago('fixa',${f.id})">${pago?"✅ Pago":"⏳ Pendente"}</button>
+      </div>`;
+    container.appendChild(div);
+  });
+  updateOrcStats();
+}
+function renderGastos(){
+  const k=curKey(),m=state.months[k]||{gastos:[],pagamentos:{}},gastos=m.gastos||[];
+  const card=document.getElementById("gastos-card");
+  if(gastos.length===0){card.style.display="none";updateOrcStats();return;}
+  card.style.display="block";
+  const container=document.getElementById("gastos-items");container.innerHTML="";
+  gastos.forEach(g=>{
+    const pago=isPago("var",g.id);
+    const div=document.createElement("div");
+
+    if(g.envelope){
+      // Envelope mode
+      const envGastos=g.gastos_env||[];
+      const spent=envGastos.reduce((s,x)=>s+x.val,0);
+      const budget=Number(g.valor),remaining=budget-spent;
+      const pctUsed=budget>0?Math.min(100,(spent/budget)*100):0;
+      const barColor=pctUsed>=100?"var(--danger)":pctUsed>=80?"var(--warn)":"var(--accent)";
+      const subsHtml=envGastos.map(s=>`
+        <div class="env-sub">
+          <span>${s.desc}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--danger);font-weight:700">-${fmt(s.val)}</span>
+            <button onclick="removeEnvelopeGasto(${g.id},${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0">✕</button>
+          </div>
+        </div>`).join("");
+      div.className="env-card"+(pago?" paid":"");
+      div.innerHTML=`
+        <div class="env-top">
+          <span class="tag" style="background:rgba(96,165,250,.15);color:var(--blue)">${g.categoria}</span>
+          <span style="font-weight:700;font-size:15px;${pago?"text-decoration:line-through;color:var(--textDim)":""}">${g.nome}</span>
+          <span class="env-remaining" style="color:${remaining<0?"var(--danger)":"var(--accent)"}">${fmtS(remaining)}</span>
+        </div>
+        <div class="env-body">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="bar-track" style="height:8px;flex:1"><div class="bar-fill" style="width:${pctUsed}%;background:${barColor};height:8px"></div></div>
+            <span style="font-size:11px;color:${barColor};font-weight:700;white-space:nowrap">${fmtS(spent)} / ${fmtS(budget)}</span>
+          </div>
+          ${subsHtml}
+          <div class="env-add">
+            <input type="text" placeholder="O que comprou?" id="ed-${g.id}"/>
+            <input type="number" inputmode="decimal" placeholder="R$" id="ev-${g.id}" style="max-width:80px"/>
+            <button class="env-add-btn" onclick="(()=>{const d=document.getElementById('ed-${g.id}').value.trim(),v=document.getElementById('ev-${g.id}').value;if(d&&v){addEnvelopeGasto(${g.id},d,v);}})()">+</button>
+          </div>
+          <div class="env-actions">
+            <button class="paid-btn${pago?" is-paid":""}" onclick="togglePago('var',${g.id})" style="flex:1">${pago?"✅ Zerado":"⏳ Em uso"}</button>
+            <button class="btn btn-danger" onclick="removeGasto(${g.id})">✕</button>
+          </div>
+        </div>`;
+    } else {
+      // Normal mode
+      div.className="item"+(pago?" paid":"");
+      div.innerHTML=`
+        <div class="item-left">
+          <span class="tag" style="background:rgba(96,165,250,.15);color:var(--blue)">${g.categoria}</span>
+          <span class="item-name${pago?" struck":""}" style="word-break:break-word">${g.nome}</span>
+        </div>
+        <div class="item-bottom">
+          <span style="font-weight:800;color:var(--warn);font-size:16px">${fmtS(g.valor)}</span>
+          <div style="display:flex;gap:6px">
+            <button class="paid-btn${pago?" is-paid":""}" onclick="togglePago('var',${g.id})">${pago?"✅ Pago":"⏳ Pendente"}</button>
+            <button class="btn btn-danger" onclick="removeGasto(${g.id})">✕</button>
+          </div>
+        </div>`;
+    }
+    container.appendChild(div);
+  });
+  updateOrcStats();
+}
+function renderMonthNav(){
+  document.getElementById("month-label").textContent=MESES[state.curMonth]+" "+state.curYear;
+  const allKeys=Object.keys(state.months).sort(),chips=document.getElementById("month-chips");chips.innerHTML="";
+  if(allKeys.length>1)allKeys.forEach(k=>{const [y,m]=k.split("-").map(Number),btn=document.createElement("button");btn.className="month-chip"+(k===curKey()?" active":"");btn.textContent=MESES[m-1].slice(0,3)+" "+y;btn.onclick=()=>{state.curYear=y;state.curMonth=m-1;renderOrcamento();};chips.appendChild(btn);});
+}
+function renderOrcamento(){const k=curKey(),m=state.months[k]||{renda:"",gastos:[],pagamentos:{}};document.getElementById("renda-input").value=m.renda||"";renderMonthNav();renderFixasMes();renderGastos();updateOrcStats();}
+
+// DÍVIDAS
+function addDivida(){
+  const nome=document.getElementById("dv-nome").value.trim(),total=document.getElementById("dv-total").value;
+  if(!nome||!total)return;
+  state.dividas.push({id:Date.now(),nome,total,pago:document.getElementById("dv-pago-input").value||"0",juros:document.getElementById("dv-juros").value||"0",tipo:document.getElementById("dv-tipo").value});
+  ["dv-nome","dv-total","dv-pago-input","dv-juros"].forEach(id=>document.getElementById(id).value="");
+  save();renderDividas();
+}
+function updateDividaPago(id,val){const d=state.dividas.find(x=>x.id===id);if(d){d.pago=val;save();renderDividas();}}
+function removeDivida(id){state.dividas=state.dividas.filter(d=>d.id!==id);save();renderDividas();}
+function renderDividas(){
+  const sorted=[...state.dividas].sort((a,b)=>Number(b.juros)-Number(a.juros));
+  const total=state.dividas.reduce((s,d)=>s+Number(d.total),0),pago=state.dividas.reduce((s,d)=>s+Number(d.pago),0);
+  const resumo=document.getElementById("dividas-resumo"),listCard=document.getElementById("dividas-list");
+  if(state.dividas.length>0){
+    resumo.style.display="block";listCard.style.display="block";
+    document.getElementById("div-total").textContent=fmtS(total);document.getElementById("div-pago").textContent=fmtS(pago);document.getElementById("div-rest").textContent=fmtS(total-pago);
+    setBar("bar-divida",pago,total,"var(--accent)");document.getElementById("div-pct").textContent=pct(pago,total).toFixed(0)+"% quitado";
+  }else{resumo.style.display="none";listCard.style.display="none";}
+  const container=document.getElementById("dividas-items");container.innerHTML="";
+  sorted.forEach((d,i)=>{
+    const restante=Number(d.total)-Number(d.pago),p=pct(Number(d.pago),Number(d.total)),div=document.createElement("div");
+    div.style.cssText="background:var(--surface);border-radius:12px;padding:16px";
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${i===0?`<span class="tag" style="background:rgba(248,113,113,.15);color:var(--danger)">🎯 Prioridade</span>`:""}<span style="font-weight:700">${d.nome}</span><span class="tag" style="background:rgba(107,114,128,.15);color:var(--muted)">${d.tipo}</span></div>
+      <div style="display:flex;gap:10px;align-items:center">${d.juros&&Number(d.juros)>0?`<span style="color:var(--warn);font-weight:700">${d.juros}%</span>`:""}<span style="color:var(--danger);font-weight:700">${fmt(restante)}</span><button class="btn btn-danger" onclick="removeDivida(${d.id})">✕</button></div>
+    </div>
+    <div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${p}%;background:var(--accent);height:8px"></div></div>
+    <div style="display:flex;gap:12px;margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--textDim);padding-bottom:4px">${p.toFixed(0)}% pago</span>
+      <div class="field has-prefix" style="flex:1;max-width:220px"><label>Atualizar valor pago</label><div class="field-wrap"><span class="field-prefix">R$</span><input type="number" inputmode="decimal" value="${d.pago}" style="padding-left:30px" oninput="updateDividaPago(${d.id},this.value)"/></div></div>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+
+// METAS
+function addMeta(){
+  const nome=document.getElementById("mt-nome").value.trim(),alvo=document.getElementById("mt-alvo").value;
+  if(!nome||!alvo)return;
+  state.metas.push({id:Date.now(),nome,alvo,atual:document.getElementById("mt-atual").value||"0",prazo:document.getElementById("mt-prazo").value});
+  ["mt-nome","mt-alvo","mt-atual","mt-prazo"].forEach(id=>document.getElementById(id).value="");
+  save();renderMetas();
+}
+function updateMetaAtual(id,val){const m=state.metas.find(x=>x.id===id);if(m){m.atual=val;save();renderMetas();}}
+function removeMeta(id){state.metas=state.metas.filter(m=>m.id!==id);save();renderMetas();}
+function mesesRestantes(prazo){if(!prazo)return null;const hoje=new Date(),[y,m]=prazo.split("-").map(Number);return Math.max(0,(y-hoje.getFullYear())*12+(m-1-hoje.getMonth()));}
+function renderMetas(){
+  const list=document.getElementById("metas-list"),empty=document.getElementById("metas-empty");list.innerHTML="";
+  if(state.metas.length===0){empty.style.display="block";return;}empty.style.display="none";
+  state.metas.forEach(m=>{
+    const p=pct(Number(m.atual),Number(m.alvo)),meses=mesesRestantes(m.prazo),mens=meses>0?(Number(m.alvo)-Number(m.atual))/meses:null,div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:16px">${m.nome}</span><button class="btn btn-danger" onclick="removeMeta(${m.id})">✕</button></div>
+    <div style="margin-bottom:12px"><div style="font-size:30px;font-weight:900;color:var(--accent)">${p.toFixed(0)}%</div><div style="font-size:13px;color:var(--textDim)">${fmt(m.atual)} de ${fmt(m.alvo)}</div></div>
+    <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${p}%;background:var(--accent);height:10px"></div></div>
+    ${mens!==null?`<div style="margin-top:12px;padding:10px 14px;background:var(--surface);border-radius:10px;font-size:13px">Guardar por mês: <strong style="color:var(--warn)">${fmt(mens)}</strong> <span style="color:var(--textDim)">(${meses} meses)</span></div>`:""}
+    <div class="field has-prefix" style="margin-top:14px"><label>Atualizar valor guardado</label><div class="field-wrap"><span class="field-prefix">R$</span><input type="number" inputmode="decimal" value="${m.atual}" style="padding-left:30px" oninput="updateMetaAtual(${m.id},this.value)"/></div></div>`;
+    list.appendChild(div);
+  });
+}
+
+// INIT
+load();ensureMonth(state.curYear,state.curMonth);goPage("fixas");
+</script>
+</body>
+</html>
