@@ -1,4 +1,4 @@
-name: Gerar App Android
+name: Android Build
 
 on:
   push:
@@ -8,21 +8,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout código
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configurar Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gerar Build
-        run: |
-          chmod +x ./gradlew
-          ./gradlew bundleRelease
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-      - name: Salvar o arquivo AAB
+      - name: Build with Gradle
+        run: ./gradlew bundleRelease
+
+      - name: Upload AAB
         uses: actions/upload-artifact@v3
         with:
           name: app-release
