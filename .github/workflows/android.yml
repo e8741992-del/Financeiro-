@@ -24,8 +24,17 @@ jobs:
 
       - name: Install Dependencies and Sync
         run: |
-          npm install
-          npx cap sync android
+          # Lista arquivos para confirmar onde estamos
+          ls -F
+          # Verifica se package.json existe antes de rodar
+          if [ -f "package.json" ]; then
+            echo "package.json encontrado, instalando..."
+            npm install
+            npx cap sync android
+          else
+            echo "ERRO: package.json não encontrado na raiz!"
+            exit 1
+          fi
 
       - name: Build Android App
         run: |
