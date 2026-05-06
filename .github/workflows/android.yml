@@ -17,10 +17,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Gradle
+      - name: Build Android App
         run: |
           cd android
-          chmod +x gradlew
+          # Garante que o projeto está limpo
+          ./gradlew clean
+          # Tenta gerar o bundle
           ./gradlew bundleRelease
 
       - name: Upload AAB
