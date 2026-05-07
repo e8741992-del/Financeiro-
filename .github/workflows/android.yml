@@ -24,16 +24,19 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Instala na raiz onde está o Capacitor
           npm install
-          # Sincroniza o android
           npx capacitor sync android
 
       - name: Build Android App
         run: |
           cd android
-          # Remove o ícone que trava a compilação
+          # ESTE COMANDO RESOLVE O ERRO DA IMAGEM 513.jpg
+          echo "android.useAndroidX=true" > gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          
+          # Remove o ícone duplicado de antes
           find . -name "ic_launcher.png" -path "*/res/raw/*" -delete
+          
           chmod +x gradlew
           ./gradlew bundleRelease
 
