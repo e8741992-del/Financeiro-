@@ -31,6 +31,8 @@ jobs:
       - name: Build Android App
         run: |
           cd AppAndroid/android
+          # ESTE COMANDO VAI APAGAR O ARQUIVO DUPLICADO PARA VOCÊ
+          find . -name "ic_launcher.png" -path "*/res/raw/*" -delete
           chmod +x gradlew
           ./gradlew bundleRelease
 
