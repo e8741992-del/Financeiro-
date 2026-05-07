@@ -24,15 +24,20 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd AppAndroid
+          # Procura onde está o package.json e entra na pasta
+          ROOT_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | xargs dirname)
+          echo "Projeto encontrado em: $ROOT_DIR"
+          cd "$ROOT_DIR"
           npm install
-          # Forma segura de rodar o capacitor sem o erro do npm
           npx capacitor sync android
 
       - name: Build Android App
         run: |
-          cd AppAndroid/android
-          # Remove o arquivo duplicado que causou erro antes
+          # Procura onde está a pasta do Android e o gradlew
+          GRADLE_DIR=$(find . -name "gradlew" -not -path "*/node_modules/*" | xargs dirname)
+          echo "Pasta Android encontrada em: $GRADLE_DIR"
+          cd "$GRADLE_DIR"
+          # Limpa o ícone duplicado que causou erro antes
           find . -name "ic_launcher.png" -path "*/res/raw/*" -delete
           chmod +x gradlew
           ./gradlew bundleRelease
@@ -41,5 +46,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: AppAndroid/android/app/build/outputs/bundle/release/*.aab
+          path: "**/build/outputs/bundle/release/*.aab"
           include-hidden-files: true
