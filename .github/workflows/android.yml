@@ -24,14 +24,15 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd www
+          # Instala na raiz onde está o Capacitor
           npm install
+          # Sincroniza o android
           npx capacitor sync android
 
       - name: Build Android App
         run: |
           cd android
-          # Limpa o ícone duplicado que causou erro antes
+          # Remove o ícone que trava a compilação
           find . -name "ic_launcher.png" -path "*/res/raw/*" -delete
           chmod +x gradlew
           ./gradlew bundleRelease
