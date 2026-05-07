@@ -24,21 +24,13 @@ jobs:
 
       - name: Install Dependencies and Sync
         run: |
-          # Lista arquivos para confirmar onde estamos
-          ls -F
-          # Verifica se package.json existe antes de rodar
-          if [ -f "package.json" ]; then
-            echo "package.json encontrado, instalando..."
-            npm install
-            npx cap sync android
-          else
-            echo "ERRO: package.json não encontrado na raiz!"
-            exit 1
-          fi
+          cd AppAndroid
+          npm install
+          npx cap sync android
 
       - name: Build Android App
         run: |
-          cd android
+          cd AppAndroid/android
           chmod +x gradlew
           ./gradlew bundleRelease
 
@@ -46,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: android/app/build/outputs/bundle/release/*.aab
+          path: AppAndroid/android/app/build/outputs/bundle/release/*.aab
           include-hidden-files: true
