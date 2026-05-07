@@ -26,13 +26,13 @@ jobs:
         run: |
           cd AppAndroid
           npm install
-          # Usando o comando direto do capacitor para evitar erro de npx
-          ./node_modules/.bin/cap sync android
+          # Forma segura de rodar o capacitor sem o erro do npm
+          npx capacitor sync android
 
       - name: Build Android App
         run: |
           cd AppAndroid/android
-          # Apaga o arquivo que estava duplicado
+          # Remove o arquivo duplicado que causou erro antes
           find . -name "ic_launcher.png" -path "*/res/raw/*" -delete
           chmod +x gradlew
           ./gradlew bundleRelease
