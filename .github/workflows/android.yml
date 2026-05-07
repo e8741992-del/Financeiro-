@@ -30,7 +30,7 @@ jobs:
       - name: Build Android App
         run: |
           cd android
-          # ESTE COMANDO RESOLVE O ERRO DA IMAGEM 513.jpg
+          # RESOLVENDO O ERRO DA IMAGEM 513.jpg
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
